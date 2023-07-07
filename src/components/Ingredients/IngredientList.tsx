@@ -1,8 +1,9 @@
 import React from 'react';
 
 import './IngredientList.css';
+import { IngredientType } from './Ingredients';
 
-type IngredientType = { id: string; title: string; amount: string };
+
 
 const IngredientList: React.FC<{
   ingredients: IngredientType[];
