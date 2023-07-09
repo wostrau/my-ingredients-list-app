@@ -22,7 +22,7 @@ const Search: React.FC<{
             : `?orderBy="title"&equalTo="${enteredFilter}"`;
 
         fetch(
-          `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json/${query}`
+          `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json${query}`
         )
           .then((response) => response.json())
           .then((responseData) => {

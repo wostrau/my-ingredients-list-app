@@ -41,9 +41,7 @@ const Ingredients: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
       }
     )
-      .then((response) => {
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((responseData) => {
         setUserIngredients((prevIngredients) => [
           ...prevIngredients,
@@ -53,8 +51,13 @@ const Ingredients: React.FC = () => {
   };
 
   const removeIngredientHandler = (id: string) => {
-    const filteredIngredients = userIngredients.filter((ig) => ig.id !== id);
-    setUserIngredients(filteredIngredients);
+    fetch(
+      `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${id}.json`,
+      { method: 'DELETE' }
+    ).then((response) => {
+      const filteredIngredients = userIngredients.filter((ig) => ig.id !== id);
+      setUserIngredients(filteredIngredients);
+    });
   };
 
   const filteredIngredientsHandler = useCallback(
