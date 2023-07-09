@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import IngredientForm from './IngredientForm';
 import Search from './Search';
@@ -57,11 +57,12 @@ const Ingredients: React.FC = () => {
     setUserIngredients(filteredIngredients);
   };
 
-  const filteredIngredientsHandler = (
-    filteredIngredients: IngredientType[]
-  ) => {
-    setUserIngredients(filteredIngredients);
-  };
+  const filteredIngredientsHandler = useCallback(
+    (filteredIngredients: IngredientType[]) => {
+      setUserIngredients(filteredIngredients);
+    },
+    []
+  );
 
   return (
     <div className='App'>

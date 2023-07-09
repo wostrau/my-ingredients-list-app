@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Card from '../UI/Card';
 import './Search.css';
@@ -11,30 +11,37 @@ const Search: React.FC<{
 
   const [enteredFilter, setEnteredFilter] = useState<string>('');
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    const query =
-      enteredFilter.length === 0
-        ? ''
-        : `?orderBy='title'&equalTo='${enteredFilter}'`;
+    const timer = setTimeout(() => {
+      if (enteredFilter === inputRef.current?.value.toString()) {
+        const query =
+          enteredFilter.length === 0
+            ? ''
+            : `?orderBy="title"&equalTo="${enteredFilter}"`;
 
-    fetch(
-      'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json'
-    )
-      .then((response) => response.json())
-      .then((responseData) => {
-        const loadedIngredients = [];
+        fetch(
+          `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json/${query}`
+        )
+          .then((response) => response.json())
+          .then((responseData) => {
+            const loadedIngredients = [];
 
-        for (const key in responseData) {
-          loadedIngredients.push({
-            id: key,
-            title: responseData[key].title,
-            amount: responseData[key].amount,
+            for (const key in responseData) {
+              loadedIngredients.push({
+                id: key,
+                title: responseData[key].title,
+                amount: responseData[key].amount,
+              });
+            }
+
+            onLoadIngredients(loadedIngredients);
           });
-        }
-
-        onLoadIngredients(loadedIngredients);
-      });
-  }, [enteredFilter, onLoadIngredients]);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [enteredFilter, onLoadIngredients, inputRef]);
 
   return (
     <section className='search'>
@@ -42,6 +49,7 @@ const Search: React.FC<{
         <div className='search-input'>
           <label>Filter by Title</label>
           <input
+            ref={inputRef}
             type='text'
             value={enteredFilter}
             onChange={(event) => {

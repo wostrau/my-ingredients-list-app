@@ -3,8 +3,6 @@ import React from 'react';
 import './IngredientList.css';
 import { IngredientType } from './Ingredients';
 
-
-
 const IngredientList: React.FC<{
   ingredients: IngredientType[];
   onRemoveItem: (id: string) => void;
