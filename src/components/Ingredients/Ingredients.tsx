@@ -57,12 +57,18 @@ const Ingredients: React.FC = () => {
     setUserIngredients(filteredIngredients);
   };
 
+  const filteredIngredientsHandler = (
+    filteredIngredients: IngredientType[]
+  ) => {
+    setUserIngredients(filteredIngredients);
+  };
+
   return (
     <div className='App'>
       <IngredientForm onAddItem={addIngredientHandler} />
 
       <section>
-        <Search />
+        <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList
           ingredients={userIngredients}
           onRemoveItem={removeIngredientHandler}
