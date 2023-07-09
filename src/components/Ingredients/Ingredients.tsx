@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 import IngredientForm from './IngredientForm';
-import Search from './Search';
 import IngredientList from './IngredientList';
+import ErrorModal from '../UI/ErrorModal';
+import Search from './Search';
 
 export type IngredientType = { id: string; title: string; amount: string };
 
 const Ingredients: React.FC = () => {
   const [userIngredients, setUserIngredients] = useState<IngredientType[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
     fetch(
       'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json'
     )
-      .then((response) => response.json())
-      .then((responseData) => {
+      .then((response) => {
+        setIsLoading(false);
+        response.json();
+      })
+      .then((responseData: any) => {
         const loadedIngredients = [];
 
         for (const key in responseData) {
@@ -33,6 +40,7 @@ const Ingredients: React.FC = () => {
     title: string;
     amount: string;
   }) => {
+    setIsLoading(true);
     fetch(
       'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json',
       {
@@ -41,8 +49,11 @@ const Ingredients: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
       }
     )
-      .then((response) => response.json())
-      .then((responseData) => {
+      .then((response) => {
+        setIsLoading(false);
+        response.json();
+      })
+      .then((responseData: any) => {
         setUserIngredients((prevIngredients) => [
           ...prevIngredients,
           { id: responseData.name, ...ingredient },
@@ -51,13 +62,23 @@ const Ingredients: React.FC = () => {
   };
 
   const removeIngredientHandler = (id: string) => {
+    setIsLoading(true);
     fetch(
       `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${id}.json`,
       { method: 'DELETE' }
-    ).then((response) => {
-      const filteredIngredients = userIngredients.filter((ig) => ig.id !== id);
-      setUserIngredients(filteredIngredients);
-    });
+    )
+      .then((response) => {
+        setIsLoading(false);
+        const filteredIngredients = userIngredients.filter(
+          (ig) => ig.id !== id
+        );
+        setUserIngredients(filteredIngredients);
+      })
+      .catch((error) => {
+        setError('Something went wrong!');
+        console.warn(error.message);
+        setIsLoading(false)
+      });
   };
 
   const filteredIngredientsHandler = useCallback(
@@ -67,10 +88,15 @@ const Ingredients: React.FC = () => {
     []
   );
 
+  const clearError = () => {
+    setError(null);
+    setIsLoading(false);
+  };
+
   return (
     <div className='App'>
-      <IngredientForm onAddItem={addIngredientHandler} />
-
+      {error && <ErrorModal children={error} onClose={clearError} />}
+      <IngredientForm onAddItem={addIngredientHandler} loading={isLoading} />
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList

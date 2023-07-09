@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 
 import Card from '../UI/Card';
+import LoadingIndicator from '../UI/LoadingIndicator';
 import './IngredientForm.css';
 
 const IngredientForm: React.FC<{
   onAddItem: (ingredient: { title: string; amount: string }) => void;
+  loading: boolean;
 }> = React.memo((props) => {
   const [enteredTitle, setEnteredTitle] = useState<string>('');
   const [enteredAmount, setEnteredAmount] = useState<string>('');
@@ -41,6 +43,7 @@ const IngredientForm: React.FC<{
           </div>
           <div className='ingredient-form__actions'>
             <button type='submit'>Add Ingredient</button>
+            {props.loading && <LoadingIndicator />}
           </div>
         </form>
       </Card>
