@@ -2,12 +2,17 @@ import React from 'react';
 
 import Card from './UI/Card';
 import './Auth.css';
+import { AuthContext } from '../context/auth-context';
 
-const Auth: React.FC = props => {
-  const loginHandler = () => {};
+const Auth: React.FC = (props) => {
+  const authContext = React.useContext(AuthContext);
+
+  const loginHandler = () => {
+    authContext.login();
+  };
 
   return (
-    <div className="auth">
+    <div className='auth'>
       <Card>
         <h2>You are not authenticated!</h2>
         <p>Please log in to continue.</p>

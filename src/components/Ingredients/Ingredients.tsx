@@ -1,24 +1,68 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useReducer } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from './IngredientList';
 import ErrorModal from '../UI/ErrorModal';
 import Search from './Search';
 
+const ingredientReducer = (
+  currentIngredients: IngredientType[],
+  action: { type: string; payload?: any }
+) => {
+  switch (action.type) {
+    case 'SET-INGREDIENTS':
+      return action.payload.ingredients;
+    case 'ADD-INGREDIENT':
+      return [...currentIngredients, action.payload.ingredient];
+    case 'DELETE-INGREDIENT':
+      return currentIngredients.filter(
+        (ingredient) => ingredient.id !== action.payload.ingredientId
+      );
+    default:
+      return currentIngredients;
+  }
+};
+
+const httpReducer = (
+  curHttpState: any,
+  action: { type: string; payload?: any }
+) => {
+  switch (action.type) {
+    case 'SEND':
+      return { loading: true, error: null };
+    case 'RESPONSE':
+      return { ...curHttpState, loading: false };
+    case 'ERROR':
+      return { loading: false, error: action.payload.error };
+    case 'CLEAR':
+      return { ...curHttpState, error: null };
+    default:
+      return curHttpState;
+  }
+};
+
 export type IngredientType = { id: string; title: string; amount: string };
 
 const Ingredients: React.FC = () => {
-  const [userIngredients, setUserIngredients] = useState<IngredientType[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [userIngredients, dispatch] = useReducer(ingredientReducer, []);
+  const [httpState, dispatchHttp] = useReducer(httpReducer, {
+    isLoading: false,
+    error: null,
+  });
+
+  //const [userIngredients, setUserIngredients] = useState<IngredientType[]>([]);
+  //const [isLoading, setIsLoading] = useState<boolean>(false);
+  //const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsLoading(true);
+    //setIsLoading(true);
+    dispatchHttp({ type: 'SEND' });
     fetch(
       'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json'
     )
       .then((response) => {
-        setIsLoading(false);
+        //setIsLoading(false);
+        dispatchHttp({ type: 'RESPONSE' });
         response.json();
       })
       .then((responseData: any) => {
@@ -32,7 +76,11 @@ const Ingredients: React.FC = () => {
           });
         }
 
-        setUserIngredients(loadedIngredients);
+        //setUserIngredients(loadedIngredients);
+        dispatch({
+          type: 'SET-INGREDIENTS',
+          payload: { ingredients: loadedIngredients },
+        });
       });
   }, []);
 
@@ -40,7 +88,8 @@ const Ingredients: React.FC = () => {
     title: string;
     amount: string;
   }) => {
-    setIsLoading(true);
+    //setIsLoading(true);
+    dispatchHttp({ type: 'SEND' });
     fetch(
       'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json',
       {
@@ -50,53 +99,74 @@ const Ingredients: React.FC = () => {
       }
     )
       .then((response) => {
-        setIsLoading(false);
+        //setIsLoading(false);
+        dispatchHttp({ type: 'RESPONSE' });
         response.json();
       })
       .then((responseData: any) => {
-        setUserIngredients((prevIngredients) => [
-          ...prevIngredients,
-          { id: responseData.name, ...ingredient },
-        ]);
+        // setUserIngredients((prevIngredients) => [
+        //   ...prevIngredients,
+        //   { id: responseData.name, ...ingredient },
+        // ]);
+        const newIngredient = { id: responseData.name, ...ingredient };
+        dispatch({
+          type: 'ADD-INGREDIENT',
+          payload: { ingredient: newIngredient },
+        });
       });
   };
 
-  const removeIngredientHandler = (id: string) => {
-    setIsLoading(true);
+  const removeIngredientHandler = (ingredientId: string) => {
+    //setIsLoading(true);
+    dispatchHttp({ type: 'SEND' });
     fetch(
-      `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${id}.json`,
+      `https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients/${ingredientId}.json`,
       { method: 'DELETE' }
     )
       .then((response) => {
-        setIsLoading(false);
-        const filteredIngredients = userIngredients.filter(
-          (ig) => ig.id !== id
-        );
-        setUserIngredients(filteredIngredients);
+        //setIsLoading(false);
+        dispatchHttp({ type: 'RESPONSE' });
+        // const filteredIngredients = userIngredients.filter(
+        //   (ingredient: IngredientType) => ingredient.id !== ingredientId
+        // );
+        //setUserIngredients(filteredIngredients);
+        dispatch({
+          type: 'DELETE-INGREDIENT',
+          payload: { id: ingredientId },
+        });
       })
       .catch((error) => {
-        setError('Something went wrong!');
+        //setError('Something went wrong!');
+        dispatchHttp({
+          type: 'ERROR',
+          payload: { error: 'Something went wrong!' },
+        });
         console.warn(error.message);
-        setIsLoading(false)
+        //setIsLoading(false);
       });
   };
 
   const filteredIngredientsHandler = useCallback(
     (filteredIngredients: IngredientType[]) => {
-      setUserIngredients(filteredIngredients);
+      //setUserIngredients(filteredIngredients);
+      dispatch({
+        type: 'SET-INGREDIENTS',
+        payload: { ingredients: filteredIngredients },
+      });
     },
     []
   );
 
   const clearError = () => {
-    setError(null);
-    setIsLoading(false);
+    //setError(null);
+    //setIsLoading(false);
+    dispatchHttp({ type: 'CLEAR' });
   };
 
   return (
     <div className='App'>
-      {error && <ErrorModal children={error} onClose={clearError} />}
-      <IngredientForm onAddItem={addIngredientHandler} loading={isLoading} />
+      {httpState.error && <ErrorModal children={httpState.error} onClose={clearError} />}
+      <IngredientForm onAddItem={addIngredientHandler} loading={httpState.loading} />
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
         <IngredientList
