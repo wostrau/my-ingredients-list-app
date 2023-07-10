@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useReducer } from 'react';
+import React, { useEffect, useCallback, useReducer, useMemo } from 'react';
 
 import IngredientForm from './IngredientForm';
 import IngredientList from './IngredientList';
@@ -84,39 +84,41 @@ const Ingredients: React.FC = () => {
       });
   }, []);
 
-  const addIngredientHandler = (ingredient: {
-    title: string;
-    amount: string;
-  }) => {
-    //setIsLoading(true);
-    dispatchHttp({ type: 'SEND' });
-    fetch(
-      'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json',
-      {
-        method: 'POST',
-        body: JSON.stringify(ingredient),
-        headers: { 'Content-Type': 'application/json' },
-      }
-    )
-      .then((response) => {
-        //setIsLoading(false);
-        dispatchHttp({ type: 'RESPONSE' });
-        response.json();
-      })
-      .then((responseData: any) => {
-        // setUserIngredients((prevIngredients) => [
-        //   ...prevIngredients,
-        //   { id: responseData.name, ...ingredient },
-        // ]);
-        const newIngredient = { id: responseData.name, ...ingredient };
-        dispatch({
-          type: 'ADD-INGREDIENT',
-          payload: { ingredient: newIngredient },
+  const addIngredientHandler = useCallback(
+    (ingredient: { title: string; amount: string }) => {
+      //setIsLoading(true);
+      dispatchHttp({ type: 'SEND' });
+      fetch(
+        'https://react-http-39eeb-default-rtdb.europe-west1.firebasedatabase.app/ingredients.json',
+        {
+          method: 'POST',
+          body: JSON.stringify(ingredient),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+        .then((response) => {
+          //setIsLoading(false);
+          dispatchHttp({ type: 'RESPONSE' });
+          response.json();
+        })
+        .then((responseData: { name: string } | void) => {
+          // setUserIngredients((prevIngredients) => [
+          //   ...prevIngredients,
+          //   { id: responseData.name, ...ingredient },
+          // ]);
+          if (responseData && responseData.name) {
+            const newIngredient = { id: responseData.name, ...ingredient };
+            dispatch({
+              type: 'ADD-INGREDIENT',
+              payload: { ingredient: newIngredient },
+            });
+          }
         });
-      });
-  };
+    },
+    []
+  );
 
-  const removeIngredientHandler = (ingredientId: string) => {
+  const removeIngredientHandler = useCallback((ingredientId: string) => {
     //setIsLoading(true);
     dispatchHttp({ type: 'SEND' });
     fetch(
@@ -144,7 +146,7 @@ const Ingredients: React.FC = () => {
         console.warn(error.message);
         //setIsLoading(false);
       });
-  };
+  }, []);
 
   const filteredIngredientsHandler = useCallback(
     (filteredIngredients: IngredientType[]) => {
@@ -157,22 +159,33 @@ const Ingredients: React.FC = () => {
     []
   );
 
-  const clearError = () => {
+  const clearError = useCallback(() => {
     //setError(null);
     //setIsLoading(false);
     dispatchHttp({ type: 'CLEAR' });
-  };
+  }, []);
+
+  const ingredientList = useMemo(() => {
+    return (
+      <IngredientList
+        ingredients={userIngredients}
+        onRemoveItem={removeIngredientHandler}
+      />
+    );
+  }, [userIngredients, removeIngredientHandler]);
 
   return (
     <div className='App'>
-      {httpState.error && <ErrorModal children={httpState.error} onClose={clearError} />}
-      <IngredientForm onAddItem={addIngredientHandler} loading={httpState.loading} />
+      {httpState.error && (
+        <ErrorModal children={httpState.error} onClose={clearError} />
+      )}
+      <IngredientForm
+        onAddItem={addIngredientHandler}
+        loading={httpState.loading}
+      />
       <section>
         <Search onLoadIngredients={filteredIngredientsHandler} />
-        <IngredientList
-          ingredients={userIngredients}
-          onRemoveItem={removeIngredientHandler}
-        />
+        {ingredientList}
       </section>
     </div>
   );
